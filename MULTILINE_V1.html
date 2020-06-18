@@ -34,7 +34,7 @@ path.line-9 {stroke: #4575b4;}
 <body>
 <div id="container" class="svg-container"></div>
 <script>
-//------------------------1. PREPARATION-------------------------//
+
 //-----------------------------SVG-------------------------------//
 const width = 960; const height = 500; 
 const margin = 5; const padding = 5; const adj = 30;
@@ -114,7 +114,6 @@ const line = d3.line()
 let id = 0;
 const ids = function () {return "line-"+id++;}
 
-//-------------------------2. DRAWING----------------------------//
 //-----------------------------AXES------------------------------//
 svg.append("g").attr("class", "axis").attr("transform", "translate(0," + height + ")").call(xaxis);
 svg.append("g").attr("class", "axis").call(yaxis)
@@ -124,10 +123,6 @@ svg.append("g").attr("class", "axis").call(yaxis)
         .attr("text-anchor", "start")
         .attr("font-weight", "bold")
         .text("Annual Mean NO2"));
-//    .append("text").attr("transform", "rotate(-90)")
-//    .attr("dy", ".75em").attr("y", 6).style("text-anchor", "end")
-//    .text("Annual Mean NO2");
-
 //----------------------------LINES------------------------------//
 
 const lines = svg.selectAll("lines").data(slices).enter().append("g");
