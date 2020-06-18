@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<head>
+<meta charset="utf-8">
+<title>Multi Line Chart</title>
+<!-- ******************************************************* -->
+<!--     Data consists of date and columns of measurements   -->
+<!--     Missing data represented by dashed line             -->
+<!--     adapted from DW, jw 6/20                            -->
+<!-- ******************************************************* -->
+<script type="text/javascript" src="d3/d3.js"></script>
+<style> 
+/* ---------------------------- STYLES -----------------------*/
+.axis line {stroke: #706f6f; stroke-width: 0.5; shape-rendering: crispEdges;} /* ticks */
+.axis path {stroke: #706f6f; stroke-width: 0.7; shape-rendering: crispEdges;}
+.axis text {fill: #2b2929;   font-family: Georgia; font-size: 120%;}
+
+path {fill: none; stroke: #d73027;stroke-width: 3;} 
+path.gapline {stroke: #aaa; stroke-dasharray: 2; stroke-width: 1;}
+path.line-0 {stroke: #aa0000;}
+path.line-1 {stroke: #d73027;}
+path.line-2 {stroke: #f46d43;} 
+path.line-3 {stroke: #fdae61;} 
+path.line-4 {stroke: #fee090;}
+path.line-5 {stroke: #ffffbf;}
+path.line-6 {stroke: #e0f3f8;}
+path.line-7 {stroke: #abd9e9;}
+path.line-8 {stroke: #74add1;}
+path.line-9 {stroke: #4575b4;}
+
+.line_label {fill: #2b2929; font-family: Georgia; font-size: 80%;}
+</style>
+</head>
+
+<body>
+<div id="container" class="svg-container"></div>
+<script>
+//------------------------1. PREPARATION-------------------------//
+//-----------------------------SVG-------------------------------//
+const width = 960; const height = 500; 
+const margin = 5; const padding = 5; const adj = 30;
+const svg = d3.select("div#container").append("svg")
+    .attr("preserveAspectRatio", "xMinYMin meet")
+    .attr("viewBox", "-" + adj + " -" + adj + " "
+          + (width + adj *3) + " " + (height + adj*3))
+    .style("padding", padding).style("margin", margin)
+    //.style("border", "solid 1px black")
+    .classed("svg-content", true);
+
+//-----------------------------DATA------------------------------//
+
+let datacsv = `ix,date,Blackpool Marton,Glazebury,Ladybower,Liverpool Speke,Manchester Piccadilly,Preston,Salford Eccles,Warrington,Wigan Centre,Wirral Tranmere,year
+0,2009-12-31,19.5,16.0,9.8,22.2,41.6,24.3,39.3,23.1,24.2,19.0,2009
+1,2010-12-31,30.8,19.4,9.9,29.8,45.3,39.1,41.9,27.7,26.2,27.3,2010
+2,2011-12-31,18.0,18.3,9.0,23.8,44.0,30.9,32.8,24.1,23.0,null,2011
+3,2012-12-31,20.2,19.0,11.0,25.4,40.9,30.3,27.8,24.3,23.9,21.0,2012
+4,2013-12-31,16.3,14.7,16.2,23.2,38.8,25.4,29.9,21.2,24.6,null,2013
+5,2014-12-31,16.2,13.5,9.9,24.7,40.5,26.5,29.6,19.8,21.8,20.5,2014
+6,2015-12-31,15.6,15.5,4.9,22.3,39.4,21.9,27.0,21.8,19.4,19.6,2015
+7,2016-12-31,16.1,15.9,7.3,23.2,40.1,23.6,28.8,25.0,20.9,22.3,2016
+8,2017-12-31,12.7,13.5,6.4,17.5,35.7,20.2,26.2,21.0,18.4,17.4,2017
+9,2018-12-31,12.5,13.8,5.7,17.6,34.6,21.1,24.7,21.4,17.3,17.5,2018
+10,2019-12-31,12.2,14.6,6.1,19.5,36.3,22.8,25.5,20.5,19.3,16.4,2019
+`
+//const timeConv = d3.timeParse("%d-%b-%Y");
+const timeConv = d3.timeParse("%Y-%m-%d"); // std date format
+const data = d3.csvParse(datacsv);
+// select some data slices
+const slices = data.columns.slice(2,12).map(function(col_name) {
+// Create an array of objects (columns of data): each object consists of 
+// column name and array of (date, measurement) objects// 
+   return { id: col_name, values: data.map(function(d) 
+            { return {date: timeConv(d.date), measurement: +d[col_name]};})
+   };
+}).sort((a,b) => (a.values[0].measurement < b.values[0].measurement));
+
+// array of rows as objects ix:.. date:.. etc
+console.log(data)
+console.log("Column headers", data.columns);
+console.log("Column headers without date", data.columns.slice(2));
+// returns the sliced dataset
+console.log("Slices",slices);  
+// returns the first slice
+console.log("First slice",slices[0]);
+// returns the array in the first slice
+console.log("An array",slices[0].values);   
+// returns the date of the first row in the first slice
+console.log("Date element",slices[0].values[0].date);  
+// returns the array's length
+console.log("Array length",(slices[0].values).length);
+
+
+//----------------------------SCALES-----------------------------//
+const labelWidth = 105;
+const xScale = d3.scaleTime().range([0,width-labelWidth]);
+const yScale = d3.scaleLinear().rangeRound([height, 0]);
+//xScale.domain(d3.extent(data, (d) => timeConv(d.date) ));
+xScale.domain([timeConv('2009-12-31'), timeConv('2020-01-01')]);
+yScale.domain([(0), d3.max(slices, function(c) {
+    return d3.max(c.values, (d) => d.measurement + 5 );})
+]);
+
+//-----------------------------AXES------------------------------//
+const yaxis = d3.axisLeft().scale(yScale); 
+const xaxis = d3.axisBottom().scale(xScale);
+ 
+//const xaxis = d3.axisBottom().ticks(d3.timeDay.every(1)).tickFormat(d3.timeFormat('%b %d')).scale(xScale);
+
+//----------------------------LINES------------------------------//
+const line = d3.line()
+    .defined(d => !isNaN(d.measurement))  
+    .x((d) => xScale(d.date) )
+    .y((d) => yScale(d.measurement) );
+
+let id = 0;
+const ids = function () {return "line-"+id++;}
+
+//-------------------------2. DRAWING----------------------------//
+//-----------------------------AXES------------------------------//
+svg.append("g").attr("class", "axis").attr("transform", "translate(0," + height + ")").call(xaxis);
+svg.append("g").attr("class", "axis").call(yaxis)
+    .call(g => g.select(".domain").remove())
+    .call(g => g.select(".tick:last-of-type text").clone()
+        .attr("x", 3)
+        .attr("text-anchor", "start")
+        .attr("font-weight", "bold")
+        .text("Annual Mean NO2"));
+//    .append("text").attr("transform", "rotate(-90)")
+//    .attr("dy", ".75em").attr("y", 6).style("text-anchor", "end")
+//    .text("Annual Mean NO2");
+
+//----------------------------LINES------------------------------//
+
+const lines = svg.selectAll("lines").data(slices).enter().append("g");
+// first draw complete dashed lines with missing data removed
+lines.append("path").attr("class", "gapline")
+      .datum((d) => d.values.filter(line.defined())).attr("d", line)
+// draw solid lines, gaps where data missing
+lines.append("path").attr("class", ids).attr("d", (d) => line(d.values) );
+// add labels
+lines.append("text").attr("class","line_label")
+    .datum(function(d) {return {id: d.id, value: d.values[d.values.length - 1]}; })
+    .attr("transform", function(d) {
+            return "translate(" + (xScale(d.value.date) + 10)  
+            + "," + (yScale(d.value.measurement) + 5 ) + ")";})
+    .attr("x", 5)
+    .text((d) => d.id);
+</script>
+</body>
