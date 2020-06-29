@@ -10,7 +10,7 @@
 <script type="text/javascript" src="d3/d3.js"></script>
 <style> 
 /* ---------------------------- STYLES -----------------------*/
-.axis line {stroke: #706f6f; stroke-width: 0.5; shape-rendering: crispEdges;} /* ticks */
+.axis line {stroke: #706f6f; stroke-width: 0.5; shape-rendering: crispEdges;} 
 .axis path {stroke: #706f6f; stroke-width: 0.7; shape-rendering: crispEdges;}
 .axis text {fill: #2b2929;   font-family: Georgia; font-size: 120%;}
 
@@ -34,7 +34,7 @@ path.line-9 {stroke: #4575b4;}
 <body>
 <div id="container" class="svg-container"></div>
 <script>
-//------------------------1. PREPARATION-------------------------//
+
 //-----------------------------SVG-------------------------------//
 const width = 960; const height = 500; 
 const margin = 5; const padding = 5; const adj = 30;
@@ -61,10 +61,8 @@ let datacsv = `ix,date,Blackpool Marton,Glazebury,Ladybower,Liverpool Speke,Manc
 9,2018-12-31,12.5,13.8,5.7,17.6,34.6,21.1,24.7,21.4,17.3,17.5,2018
 10,2019-12-31,12.2,14.6,6.1,19.5,36.3,22.8,25.5,20.5,19.3,16.4,2019
 `
-//const timeConv = d3.timeParse("%d-%b-%Y");
-const timeConv = d3.timeParse("%Y-%m-%d"); // std date format
+const timeConv = d3.timeParse("%Y-%m-%d"); 
 const data = d3.csvParse(datacsv);
-// select some data slices
 const slices = data.columns.slice(2,12).map(function(col_name) {
 // Create an array of objects (columns of data): each object consists of 
 // column name and array of (date, measurement) objects// 
@@ -72,22 +70,6 @@ const slices = data.columns.slice(2,12).map(function(col_name) {
             { return {date: timeConv(d.date), measurement: +d[col_name]};})
    };
 }).sort((a,b) => (a.values[0].measurement < b.values[0].measurement));
-
-// array of rows as objects ix:.. date:.. etc
-console.log(data)
-console.log("Column headers", data.columns);
-console.log("Column headers without date", data.columns.slice(2));
-// returns the sliced dataset
-console.log("Slices",slices);  
-// returns the first slice
-console.log("First slice",slices[0]);
-// returns the array in the first slice
-console.log("An array",slices[0].values);   
-// returns the date of the first row in the first slice
-console.log("Date element",slices[0].values[0].date);  
-// returns the array's length
-console.log("Array length",(slices[0].values).length);
-
 
 //----------------------------SCALES-----------------------------//
 const labelWidth = 105;
@@ -102,9 +84,6 @@ yScale.domain([(0), d3.max(slices, function(c) {
 //-----------------------------AXES------------------------------//
 const yaxis = d3.axisLeft().scale(yScale); 
 const xaxis = d3.axisBottom().scale(xScale);
- 
-//const xaxis = d3.axisBottom().ticks(d3.timeDay.every(1)).tickFormat(d3.timeFormat('%b %d')).scale(xScale);
-
 //----------------------------LINES------------------------------//
 const line = d3.line()
     .defined(d => !isNaN(d.measurement))  
@@ -114,7 +93,6 @@ const line = d3.line()
 let id = 0;
 const ids = function () {return "line-"+id++;}
 
-//-------------------------2. DRAWING----------------------------//
 //-----------------------------AXES------------------------------//
 svg.append("g").attr("class", "axis").attr("transform", "translate(0," + height + ")").call(xaxis);
 svg.append("g").attr("class", "axis").call(yaxis)
@@ -124,10 +102,6 @@ svg.append("g").attr("class", "axis").call(yaxis)
         .attr("text-anchor", "start")
         .attr("font-weight", "bold")
         .text("Annual Mean NO2"));
-//    .append("text").attr("transform", "rotate(-90)")
-//    .attr("dy", ".75em").attr("y", 6).style("text-anchor", "end")
-//    .text("Annual Mean NO2");
-
 //----------------------------LINES------------------------------//
 
 const lines = svg.selectAll("lines").data(slices).enter().append("g");
